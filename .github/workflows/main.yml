@@ -1,0 +1,56 @@
+
+name: Build DeathDimension V2.1
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Extract Source ZIP
+        shell: bash
+        run: |
+          set -e
+
+          ZIP="DeathDimensionV2.1-DeathEffects-FloatingBlocks-Source.zip"
+
+          if [ ! -f "$ZIP" ]; then
+            echo "ZIP tidak ditemukan!"
+            find . -maxdepth 2 -iname '*.zip'
+            exit 1
+          fi
+
+          mkdir -p source
+          unzip -oq "$ZIP" -d source
+
+          if [ ! -f source/pom.xml ]; then
+            echo "pom.xml tidak ditemukan!"
+            exit 1
+          fi
+
+      - name: Build Plugin
+        run: mvn -B -f source/pom.xml clean package
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeathDimension-V2.1-FloatingBlocks
+          path: source/target/*.jar
+          if-no-files-found: error
